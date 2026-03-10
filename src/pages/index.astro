@@ -1,0 +1,11 @@
+---
+import { SubstrateApp } from "@/components/substrate/SubstrateApp.tsx";
+import Layout from "@/layouts/Layout.astro";
+---
+
+<Layout
+  title="SUBSTRATE | PIXI"
+  description="Substrate visualization with React and PixiJS."
+>
+  <SubstrateApp client:only="react" />
+</Layout>

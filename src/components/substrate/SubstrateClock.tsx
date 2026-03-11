@@ -31,7 +31,14 @@ export function SubstrateClock({ show }: SubstrateClockProps) {
         className="font-mono text-[8rem] leading-none font-bold tracking-tighter md:text-[12rem]"
         style={{
           color: "#f8f6f0",
-          WebkitTextStroke: "0.5px #27272a", // 縁取りをより細く
+          // Use textShadow for a consistent thin outline across different DPIs and browsers.
+          // -webkit-text-stroke is often buggy on high-DPI mobile devices.
+          textShadow: `
+            0.5px 0.5px 0 #27272a,
+            -0.5px -0.5px 0 #27272a,
+            0.5px -0.5px 0 #27272a,
+            -0.5px 0.5px 0 #27272a
+          `,
         }}
       >
         {formattedTime}

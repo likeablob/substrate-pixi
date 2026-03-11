@@ -3,11 +3,23 @@ import pollockShimmeringUrl from "@/assets/pollockShimmering.gif?url";
 export const PALETTES = {
   pollock: {
     id: "pollock",
-    label: "Original (Pollock)",
+    label: "Original (pollockShimmering)",
   },
-  watercolor: {
-    id: "watercolor",
-    label: "Faded (Watercolor)",
+  faded: {
+    id: "faded",
+    label: "Faded",
+  },
+  summerpool: {
+    id: "summerpool",
+    label: "Summer Pool",
+  },
+  suburban: {
+    id: "suburban",
+    label: "Sub Urban",
+  },
+  monochrome: {
+    id: "monochrome",
+    label: "Monochrome Ink",
   },
 } as const;
 
@@ -19,6 +31,18 @@ const watercolorPalette: number[] = [
   0xf8f5eb, 0x7a6b5a, 0x9e8f7a, 0xbdad9e, 0xdecfc0, 0xf0e8d8, 0x5a6b7a,
   0x7a8c9e, 0x9eb3ce, 0xcfdfef, 0xe8f2fa, 0x8a7a6b, 0xae9e8c, 0xcfc0a9,
   0xe8e0cf, 0xf5f0eb,
+];
+
+const deepSeaPalette: number[] = [
+  0x003366, 0x006699, 0x3399aa, 0x66cccc, 0x99e6e6, 0x004d4d,
+];
+
+const forestPalette: number[] = [
+  0x2d3e2d, 0x4a5d4a, 0x6b7c6b, 0xa67c52, 0x5d4a4a, 0x8c9b8c,
+];
+
+const monochromePalette: number[] = [
+  0x1a1a1a, 0x333333, 0x4d4d4d, 0x666666, 0x808080, 0x999999,
 ];
 
 let goodcolor: number[] = [];
@@ -33,10 +57,24 @@ export function getPaletteSize(): number {
 }
 
 export function setPalette(paletteId: PaletteId): void {
-  if (paletteId === "pollock") {
-    goodcolor = pollockPalette;
-  } else {
-    goodcolor = watercolorPalette;
+  switch (paletteId) {
+    case "pollock":
+      goodcolor = pollockPalette;
+      break;
+    case "faded":
+      goodcolor = watercolorPalette;
+      break;
+    case "summerpool":
+      goodcolor = deepSeaPalette;
+      break;
+    case "suburban":
+      goodcolor = forestPalette;
+      break;
+    case "monochrome":
+      goodcolor = monochromePalette;
+      break;
+    default:
+      goodcolor = pollockPalette;
   }
   numpal = goodcolor.length;
 }
@@ -69,7 +107,6 @@ export async function loadPaletteFromBase64(): Promise<void> {
         }
       }
 
-      setPalette("pollock");
       resolve();
     };
     img.src = pollockShimmeringUrl;

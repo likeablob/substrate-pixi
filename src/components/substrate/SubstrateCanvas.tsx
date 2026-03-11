@@ -1,6 +1,7 @@
 import { SubstrateEngine } from "@/lib/substrate/engine";
 import type { SubstrateEngineConfig } from "@/lib/substrate/types";
 import { useSubstrateInteractions } from "@/lib/substrate/useSubstrateInteractions";
+import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 
 interface SubstrateCanvasProps {
@@ -86,7 +87,13 @@ export function SubstrateCanvas({
       className="fixed inset-0 flex items-center justify-center overflow-hidden"
       style={{ backgroundColor: "#f8f6f0" }}
     >
-      <canvas ref={canvasRef} className="block transition-all duration-500" />
+      <canvas
+        ref={canvasRef}
+        className={cn(
+          "block transition-opacity duration-1000",
+          isInitialized ? "opacity-100" : "opacity-0",
+        )}
+      />
     </div>
   );
 }

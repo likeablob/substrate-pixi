@@ -3,15 +3,15 @@ import { SandPainter } from "./sandpainter.js";
 import type { DrawingBounds } from "./types.js";
 import { int, random } from "./utils.js";
 
-const TEX_SIZE = 4096;
-
 let cgrid: Int32Array | null = null;
 let minCurve = 0.001;
 let maxCurve = 0.01;
 let totalSteps = 0;
+let currentTexSize = 4096;
 
-export function initCgrid(): void {
-  cgrid = new Int32Array(TEX_SIZE * TEX_SIZE).fill(10001);
+export function initCgrid(size: number = 4096): void {
+  currentTexSize = size;
+  cgrid = new Int32Array(currentTexSize * currentTexSize).fill(10001);
 }
 
 export function updateCurveParams(min: number, max: number): void {
@@ -74,13 +74,13 @@ export class Crack {
       py = int(random(rangeStartY, rangeStartY + rangeHeight));
 
       // Boundary check to prevent index out of bounds
-      if (px >= 0 && px < TEX_SIZE && py >= 0 && py < TEX_SIZE) {
-        if (cgrid![px + py * TEX_SIZE] < 10000) found = true;
+      if (px >= 0 && px < currentTexSize && py >= 0 && py < currentTexSize) {
+        if (cgrid![px + py * currentTexSize] < 10000) found = true;
       }
     }
 
     if (found) {
-      let a = cgrid![px + py * TEX_SIZE];
+      let a = cgrid![px + py * currentTexSize];
       if (random(100) < 50) a += -90 + int(random(-2, 2.1));
       else a += 90 + int(random(-2, 2.1));
       this.startCrack(px, py, a);
@@ -135,13 +135,13 @@ export class Crack {
       cy >= boundStartY &&
       cy < boundEndY
     ) {
-      if (cx >= 0 && cx < TEX_SIZE && cy >= 0 && cy < TEX_SIZE) {
+      if (cx >= 0 && cx < currentTexSize && cy >= 0 && cy < currentTexSize) {
         if (
-          cgrid![cx + cy * TEX_SIZE] > 10000 ||
-          Math.abs(cgrid![cx + cy * TEX_SIZE] - this.t) < 5
+          cgrid![cx + cy * currentTexSize] > 10000 ||
+          Math.abs(cgrid![cx + cy * currentTexSize] - this.t) < 5
         ) {
-          cgrid![cx + cy * TEX_SIZE] = int(this.t);
-        } else if (Math.abs(cgrid![cx + cy * TEX_SIZE] - this.t) > 2) {
+          cgrid![cx + cy * currentTexSize] = int(this.t);
+        } else if (Math.abs(cgrid![cx + cy * currentTexSize] - this.t) > 2) {
           this.findStart(bounds);
           onCreateCrack();
         }
@@ -165,8 +165,8 @@ export class Crack {
       ry -= 0.81 * Math.cos((this.t * Math.PI) / 180);
       const cx = int(rx),
         cy = int(ry);
-      if (cx >= 0 && cx < TEX_SIZE && cy >= 0 && cy < TEX_SIZE) {
-        if (cgrid![cx + cy * TEX_SIZE] > 10000) {
+      if (cx >= 0 && cx < currentTexSize && cy >= 0 && cy < currentTexSize) {
+        if (cgrid![cx + cy * currentTexSize] > 10000) {
           // space is open
         } else {
           openspace = false;

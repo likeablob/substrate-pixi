@@ -7,7 +7,13 @@ export const engineConfigSchema = z.object({
   minCurve: z.number().min(0).max(0.5),
   density: z.number().min(10).max(500),
   resetInterval: z.number().min(30).max(1800),
-  palette: z.enum(["pollock", "watercolor"] as const),
+  palette: z.enum([
+    "pollock",
+    "faded",
+    "summerpool",
+    "suburban",
+    "monochrome",
+  ] as const),
   isStraight: z.boolean(),
   canvasSize: z.enum([
     "viewport",

@@ -17,7 +17,7 @@ import type {
 } from "./types.js";
 import { random, setSeed } from "./utils.js";
 
-const TEX_SIZE = 4096;
+const MAX_PHYSICAL_SIZE = 8192;
 const MAX_STEP_PARTICLES = 500000;
 
 export class SubstrateEngine implements EngineAPI {
@@ -34,24 +34,28 @@ export class SubstrateEngine implements EngineAPI {
   private pIdx = 0;
   private initialized = false;
   private startTime: number = 0;
+  private texSize: number = 4096;
+  private resolution: number = 1;
   private drawingBounds: DrawingBounds = {
     x: 0,
     y: 0,
-    width: TEX_SIZE,
-    height: TEX_SIZE,
+    width: 4096,
+    height: 4096,
   };
 
   constructor(config: SubstrateEngineConfig) {
     this.config = config;
     this.world = new PIXI.Container();
+
+    // Initial placeholder texture
     this.canvasTexture = PIXI.RenderTexture.create({
-      width: TEX_SIZE,
-      height: TEX_SIZE,
+      width: 4096,
+      height: 4096,
     });
     this.canvasSprite = new PIXI.Sprite(this.canvasTexture);
     this.canvasSprite.anchor.set(0);
-    this.canvasSprite.x = -TEX_SIZE / 2;
-    this.canvasSprite.y = -TEX_SIZE / 2;
+    this.canvasSprite.x = -2048;
+    this.canvasSprite.y = -2048;
     this.lineGraphics = new PIXI.Graphics();
 
     const geometry = new PIXI.Geometry()
@@ -74,15 +78,14 @@ export class SubstrateEngine implements EngineAPI {
     );
     this.particleMesh.state.blend = true;
     this.particleMesh.state.blendMode = PIXI.BLEND_MODES.NORMAL;
-
-    this.updateDrawingBounds();
   }
 
   private updateDrawingBounds(): void {
+    const halfSize = this.texSize / 2;
     if (this.config.canvasSize === "viewport") {
       this.drawingBounds = {
-        x: TEX_SIZE / 2 - window.innerWidth / 2,
-        y: TEX_SIZE / 2 - window.innerHeight / 2,
+        x: halfSize - window.innerWidth / 2,
+        y: halfSize - window.innerHeight / 2,
         width: window.innerWidth,
         height: window.innerHeight,
       };
@@ -94,9 +97,12 @@ export class SubstrateEngine implements EngineAPI {
     else if (this.config.canvasSize === "2000x2000") size = 2000;
     else if (this.config.canvasSize === "4000x4000") size = 4000;
 
+    // Safety: ensure size doesn't exceed texSize
+    size = Math.min(size, this.texSize);
+
     this.drawingBounds = {
-      x: TEX_SIZE / 2 - size / 2,
-      y: TEX_SIZE / 2 - size / 2,
+      x: halfSize - size / 2,
+      y: halfSize - size / 2,
       width: size,
       height: size,
     };
@@ -107,22 +113,54 @@ export class SubstrateEngine implements EngineAPI {
       throw new Error("Engine already initialized");
     }
 
-    await loadPaletteFromBase64();
-    this.reset();
+    // Dynamic sizing strategy:
+    // 1. Get window DPI and round to nearest integer.
+    // Fractional DPI often causes grid-like seams on mobile tiled GPUs.
+    const dpr = window.devicePixelRatio || 1;
+    this.resolution = Math.max(1, Math.min(Math.round(dpr), 3));
+
+    // 2. Calculate logical size so that physical size stays within MAX_PHYSICAL_SIZE (4096)
+    this.texSize = Math.floor(MAX_PHYSICAL_SIZE / this.resolution);
 
     this.app = new PIXI.Application({
       view: canvas,
       width: canvas.clientWidth || window.innerWidth,
       height: canvas.clientHeight || window.innerHeight,
       backgroundColor: 0xf8f6f0,
-      antialias: true,
-      resolution: window.devicePixelRatio || 1,
+      antialias: false,
+      resolution: this.resolution,
+      autoDensity: true,
+      // @ts-ignore
+      roundPixels: true,
     });
+
+    // Recreate texture with optimal resolution and size
+    this.canvasTexture.destroy(true);
+    this.canvasTexture = PIXI.RenderTexture.create({
+      width: this.texSize,
+      height: this.texSize,
+      resolution: this.resolution,
+      scaleMode: PIXI.SCALE_MODES.LINEAR,
+    });
+    this.canvasSprite.texture = this.canvasTexture;
+
+    // Use floor to ensure integer logical position
+    this.canvasSprite.x = -Math.floor(this.texSize / 2);
+    this.canvasSprite.y = -Math.floor(this.texSize / 2);
+
+    // Set particle size to match resolution
+    this.particleMesh.shader.uniforms.uResolution = this.resolution;
+
+    await loadPaletteFromBase64();
+    setPalette(this.config.palette);
+    this.updateDrawingBounds();
+    initCgrid(this.texSize);
+    this.reset();
 
     this.app.stage.addChild(this.world);
     this.world.addChild(this.canvasSprite);
-    this.world.x = this.app.screen.width / 2;
-    this.world.y = this.app.screen.height / 2;
+    this.world.x = Math.floor(this.app.screen.width / 2);
+    this.world.y = Math.floor(this.app.screen.height / 2);
 
     this.setupSandCallback();
     this.setupRenderLoop();
@@ -132,7 +170,9 @@ export class SubstrateEngine implements EngineAPI {
 
   reset(): void {
     setSeed(this.config.seed);
-    initCgrid();
+    const cgrid = getCgrid();
+    cgrid.fill(10001); // Reset existing grid instead of re-allocating if possible
+
     const min = this.config.isStraight ? 0 : this.config.minCurve;
     const max = this.config.isStraight ? 0 : this.config.maxCurve;
     updateCurveParams(min, max);
@@ -143,7 +183,7 @@ export class SubstrateEngine implements EngineAPI {
 
     const bg = new PIXI.Graphics()
       .beginFill(0xf8f6f0)
-      .drawRect(0, 0, TEX_SIZE, TEX_SIZE)
+      .drawRect(0, 0, this.texSize, this.texSize)
       .endFill();
 
     if (this.app) {
@@ -153,7 +193,6 @@ export class SubstrateEngine implements EngineAPI {
       });
     }
 
-    const cgrid = getCgrid();
     for (let k = 0; k < 16; k++) {
       const px = Math.floor(
         random(
@@ -167,8 +206,8 @@ export class SubstrateEngine implements EngineAPI {
           this.drawingBounds.y + this.drawingBounds.height,
         ),
       );
-      if (px >= 0 && px < TEX_SIZE && py >= 0 && py < TEX_SIZE) {
-        const i = px + py * TEX_SIZE;
+      if (px >= 0 && px < this.texSize && py >= 0 && py < this.texSize) {
+        const i = px + py * this.texSize;
         cgrid[i] = Math.floor(random(360));
       }
     }

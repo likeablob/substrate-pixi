@@ -6,6 +6,12 @@ This is a React + Astro + PixiJS port of the "Substrate" artistic visualization 
 
 Original implementation: [complexification.net/gallery/machines/substrate/](http://www.complexification.net/gallery/machines/substrate/)
 
+## Gallery
+
+|                                                                     Sub Urban                                                                      |                                                                   Monochrome Ink                                                                   |                                                                    Summer Pool                                                                     |
+| :------------------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------: |
+| <video src="https://github.com/user-attachments/assets/add6fbde-3070-472a-84a3-a20e4e289936" autoplay loop muted playsinline width="100%"></video> | <video src="https://github.com/user-attachments/assets/2505f8b0-fa4e-49de-be4c-f76b04222100" autoplay loop muted playsinline width="100%"></video> | <video src="https://github.com/user-attachments/assets/71519a10-ac1d-41b1-866c-a393671f6152" autoplay loop muted playsinline width="100%"></video> |
+
 ## Tech Stack
 
 ```mermaid

@@ -1,6 +1,6 @@
 https://github.com/user-attachments/assets/81657547-a143-44ee-b8d7-d5f5446acbec
 
-# Substrate | Pixi
+# [Substrate | Pixi](https://likeablob.github.io/substrate-pixi/)
 
 This is a React + Astro + PixiJS port of the "Substrate" artistic visualization algorithm.
 
